@@ -54,6 +54,15 @@
  * \ingroup FreeRTOSIntro
  */
 
+/*
+链表是一种物理存储结构非连续的存储结构，数据元素的逻辑顺序通过链表中的指针链接次序实现
+链表的节点包括数据项和指针项，其中数据项用来存储数据，指针项用来指向上或下一个节点的物理地址，
+所以实际上链表的节点就是一种特殊的结构体，包含数据项和指针项
+
+FreeRTOS 的 list 其实就是一个循环双向链表的初始化、增、删
+
+*/
+
 
 #ifndef LIST_H
 #define LIST_H
@@ -136,24 +145,42 @@
     #define listTEST_LIST_INTEGRITY( pxList )                           configASSERT( ( ( pxList )->xListIntegrityValue1 == pdINTEGRITY_CHECK_VALUE ) && ( ( pxList )->xListIntegrityValue2 == pdINTEGRITY_CHECK_VALUE ) )
 #endif /* configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES */
 
+/*
+定义了三种链表结构体，包括
+普通节点 xLIST_ITEM
+精简节点 xMINI_LIST_ITEM
+头节点   xLIST
+*/
 
 /*
  * Definition of the only type of object that a list can contain.
  */
 struct xLIST;
-struct xLIST_ITEM
+struct xLIST_ITEM  //普通节点
 {
     listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE           /*< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+
+    //排序使用，一般用作降序排序使用
     configLIST_VOLATILE TickType_t xItemValue;          /*< The value being listed.  In most cases this is used to sort the list in ascending order. */
+
+    //下一个节点的地址
     struct xLIST_ITEM * configLIST_VOLATILE pxNext;     /*< Pointer to the next ListItem_t in the list. */
+
+    //上一个节点的地址
     struct xLIST_ITEM * configLIST_VOLATILE pxPrevious; /*< Pointer to the previous ListItem_t in the list. */
+
+    //指向拥有该节点的内核对象，一般是TCB
     void * pvOwner;                                     /*< Pointer to the object (normally a TCB) that contains the list item.  There is therefore a two way link between the object containing the list item and the list item itself. */
+    
+    //指向所在链表的链表头
     struct xLIST * configLIST_VOLATILE pxContainer;     /*< Pointer to the list in which this list item is placed (if any). */
+
+
     listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE          /*< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
 };
 typedef struct xLIST_ITEM ListItem_t;                   /* For some reason lint wants this as two separate definitions. */
 
-struct xMINI_LIST_ITEM
+struct xMINI_LIST_ITEM  //精简节点
 {
     listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE /*< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
     configLIST_VOLATILE TickType_t xItemValue;
@@ -165,12 +192,20 @@ typedef struct xMINI_LIST_ITEM MiniListItem_t;
 /*
  * Definition of the type of queue used by the scheduler.
  */
-typedef struct xLIST
+typedef struct xLIST  //头节点 代表着链表
 {
     listFIRST_LIST_INTEGRITY_CHECK_VALUE      /*< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+
+    //表示该链表下有多少个节点
     volatile UBaseType_t uxNumberOfItems;
+
+    //用来遍历链表的所有节点
     ListItem_t * configLIST_VOLATILE pxIndex; /*< Used to walk through the list.  Points to the last item returned by a call to listGET_OWNER_OF_NEXT_ENTRY (). */
+
+    //链表的最后一个节点  由于是双向循环链表，所以链表的最后一个节点也是头节点
     MiniListItem_t xListEnd;                  /*< List item that contains the maximum possible item value meaning it is always at the end of the list and is therefore used as a marker. */
+    
+
     listSECOND_LIST_INTEGRITY_CHECK_VALUE     /*< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
 } List_t;
 

@@ -95,6 +95,7 @@ typedef BaseType_t (* TaskHookFunction_t)( void * );
 /* Task states returned by eTaskGetState. */
 typedef enum
 {
+    //运行状态
     eRunning = 0,     /* A task is querying the state of itself, so must be running. */
     eReady,           /* The task being queried is in a ready or pending ready list. */
     eBlocked,         /* The task being queried is in the Blocked state. */
